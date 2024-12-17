@@ -6,13 +6,26 @@
     <title>Sistema de Gestión de Empleados</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
-    {% if user.is_authenticated and not request.path == '/accounts/login/' %}
-        {% include 'sidebar.html' %}
-        <div class="ml-64 p-4">
-            {% block content %}{% endblock %}
+<body class="bg-gray-100 h-screen">
+
+    {% if user.is_authenticated %}
+        <div class="flex h-full">
+            <!-- Sidebar -->
+            <div class="w-64 bg-gray-800 text-white p-4 fixed h-full">
+                {% include 'sidebar.html' %}
+            </div>
+
+            <!-- Contenido -->
+            <div class="ml-64 flex-1 p-10">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    {% else %}
+        <!-- Aquí el contenido para no autenticados si es necesario -->
+        <div class="flex justify-center items-center h-screen">
+            {% block login %}{% endblock %}
         </div>
     {% endif %}
+
 </body>
 </html>
-
