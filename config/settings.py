@@ -29,6 +29,7 @@ ALLOWED_HOSTS = []
 
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGIN_URL = '/'
+LOGOUT = '/'
 
 # Application definition
 

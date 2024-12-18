@@ -15,7 +15,10 @@ urlpatterns = [
     path('crear-editar-trabajador/', views.crear_editar_trabajador, name='crear_editar_trabajador'),
     path('eliminar-trabajador/<int:user_id>/', views.eliminar_trabajador, name='eliminar_trabajador'),
     path('obtener-trabajador/<int:user_id>/', views.obtener_trabajador, name='obtener_trabajador'),
-
+    path('gestionar-criterios-evaluacion/', views.gestionar_criterios_evaluacion, name='gestionar_criterios_evaluacion'),
+    path('crear-editar-criterio/', views.crear_editar_criterio, name='crear_editar_criterio'),
+    path('eliminar-criterio/<int:criterio_id>/', views.eliminar_criterio, name='eliminar_criterio'),
+    path('obtener-criterio/<int:criterio_id>/', views.obtener_criterio, name='obtener_criterio'),
     
     # API URLs
     path('api/', include(router.urls)),
