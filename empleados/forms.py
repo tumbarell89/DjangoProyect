@@ -1,21 +1,38 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Empleado
+from .models import Empleado, Departamento
+
+class UserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'activo']
 
 class EmpleadoForm(forms.ModelForm):
-    user = forms.ModelChoiceField(queryset=User.objects.all(), label="Usuario")
-
     class Meta:
         model = Empleado
-        fields = ['user', 'departamento', 'habilidades', 'aptitudes', 'competencias']
-        widgets = {
-            'departamento': forms.TextInput(attrs={'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'}),
-            'habilidades': forms.Textarea(attrs={'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline', 'rows': 3}),
-            'aptitudes': forms.Textarea(attrs={'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline', 'rows': 3}),
-            'competencias': forms.Textarea(attrs={'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline', 'rows': 3}),
-        }
+        fields = ['departamento', 'habilidades', 'aptitudes', 'competencias']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['user'].widget.attrs.update({'class': 'shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'})
+class UserEmpleadoForm(forms.ModelForm):
+    departamento = forms.ModelChoiceField(queryset=Departamento.objects.all(), required=False)
+    habilidades = forms.CharField(widget=forms.Textarea, required=False)
+    aptitudes = forms.CharField(widget=forms.Textarea, required=False)
+    competencias = forms.CharField(widget=forms.Textarea, required=False)
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'activo', 
+                  'departamento', 'habilidades', 'aptitudes', 'competencias']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if commit:
+            user.save()
+            empleado, created = Empleado.objects.get_or_create(user=user)
+            empleado.departamento = self.cleaned_data['departamento']
+            empleado.habilidades = self.cleaned_data['habilidades']
+            empleado.aptitudes = self.cleaned_data['aptitudes']
+            empleado.competencias = self.cleaned_data['competencias']
+            empleado.save()
+        return user
 
