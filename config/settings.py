@@ -29,7 +29,11 @@ ALLOWED_HOSTS = []
 
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGIN_URL = '/'
-LOGOUT = '/'
+# Asegúrate de que no haya una línea como esta:
+# AUTH_USER_MODEL = 'empleados.CustomUser'
+
+LOGOUT_REDIRECT_URL = 'login'
+LOGIN_REDIRECT_URL = 'gestionar_trabajadores'
 
 # Application definition
 
