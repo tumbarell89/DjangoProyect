@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Empleado, Departamento, RolEmpleado, CriterioEvaluacion
+from .models import Empleado, Departamento, RolEmpleado, CriterioEvaluacion, Evaluacion, EvaluacionDetalle
 
 class UserEmpleadoForm(forms.ModelForm):
     departamento = forms.ModelChoiceField(queryset=Departamento.objects.all(), required=False)
@@ -12,7 +12,7 @@ class UserEmpleadoForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'is_superuser', 'activo', 
-                  'departamento', 'rol', 'habilidades', 'aptitudes', 'competencias']
+                 'departamento', 'rol', 'habilidades', 'aptitudes', 'competencias']
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -31,4 +31,17 @@ class CriterioEvaluacionForm(forms.ModelForm):
     class Meta:
         model = CriterioEvaluacion
         fields = ['denominacion', 'rol']
+
+class EvaluacionForm(forms.ModelForm):
+    mes_inicial = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    mes_final = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+
+    class Meta:
+        model = Evaluacion
+        fields = ['mes_inicial', 'mes_final']
+
+class EvaluacionDetalleForm(forms.ModelForm):
+    class Meta:
+        model = EvaluacionDetalle
+        fields = ['puntuacion', 'concepto']
 

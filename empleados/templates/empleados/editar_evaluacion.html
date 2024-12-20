@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Editar Evaluación</h1>
+        <div class="text-sm text-gray-600">
+            <p>Período: {{ evaluacion.mes_inicial|date:"m/Y" }} - {{ evaluacion.mes_final|date:"m/Y" }}</p>
+            <p>Autor: {{ evaluacion.autor.get_full_name }}</p>
+        </div>
+    </div>
+
+    <form method="post" class="bg-white shadow-md rounded-lg overflow-x-auto">
+        {% csrf_token %}
+        <table class="min-w-full">
+            <thead>
+                <tr class="bg-gray-200 text-gray-600 text-sm leading-normal">
+                    <th class="py-3 px-6 text-left sticky left-0 bg-gray-200 z-10">Trabajador</th>
+                    {% for criterio in criterios %}
+                    <th class="py-3 px-6 text-center">
+                        <div class="w-40">{{ criterio.denominacion }}</div>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="text-gray-600 text-sm">
+                {% for empleado in empleados %}
+                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left whitespace-nowrap sticky left-0 bg-white">
+                        <span class="font-medium">{{ empleado.user.get_full_name }}</span>
+                    </td>
+                    {% for criterio in criterios %}
+                    <td class="py-3 px-6">
+                        <div class="flex flex-col space-y-2">
+                            <select name="puntuacion_{{ empleado.id }}_{{ criterio.id }}" 
+                                    class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                <option value="">Seleccione</option>
+                                {% for i in "12345" %}
+                                <option value="{{ i }}" 
+                                    {% if evaluaciones.puntuacion == i %}selected{% endif %}>
+                                    {{ i }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <input type="text" 
+                                   name="concepto_{{ empleado.id }}_{{ criterio.id }}"
+                                   placeholder="Concepto"
+                                   value="{{ evaluaciones.concepto|default:'' }}"
+                                   class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        </div>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="p-4 border-t flex justify-end space-x-2">
+            <a href="{% url 'gestionar_evaluaciones' %}" 
+               class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                Guardar Evaluación
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Estilos adicionales para mejorar la experiencia de usuario */
+    .sticky {
+        position: sticky;
+        z-index: 10;
+    }
+    
+    select, input[type="text"] {
+        width: 100%;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        border: 1px solid #d1d5db;
+    }
+    
+    select:focus, input[type="text"]:focus {
+        outline: none;
+        border-color: #3b82f6;
+        ring: 2px;
+        ring-color: #3b82f6;
+    }
+</style>
+{% endblock %}
+
