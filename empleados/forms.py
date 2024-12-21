@@ -43,5 +43,5 @@ class EvaluacionForm(forms.ModelForm):
 class EvaluacionDetalleForm(forms.ModelForm):
     class Meta:
         model = EvaluacionDetalle
-        fields = ['puntuacion', 'concepto']
+        fields = ['puntuacion']
 

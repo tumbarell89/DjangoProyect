@@ -51,7 +51,6 @@ class EvaluacionDetalle(models.Model):
     puntuacion = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
-    concepto = models.TextField(blank=True)
 
     class Meta:
         unique_together = ['evaluacion', 'empleado', 'criterio']

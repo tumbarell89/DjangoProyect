@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <title>Sistema de Gestión de Empleados</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -17,6 +18,8 @@
 
             <!-- Contenido -->
             <div class="ml-64 flex-1 p-10">
+                <h1 class="text-2xl font-bold text-blue-900">Sistema de Gestión De Evaluación de Trabajadores</h1>
+                <p class="text-2xl font-bold">----------------------------------------------------------------------------------------------</p>
                 {% block content %}{% endblock %}
             </div>
         </div>

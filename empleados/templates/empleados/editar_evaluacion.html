@@ -42,11 +42,6 @@
                                 </option>
                                 {% endfor %}
                             </select>
-                            <input type="text" 
-                                   name="concepto_{{ empleado.id }}_{{ criterio.id }}"
-                                   placeholder="Concepto"
-                                   value="{{ evaluaciones.concepto|default:'' }}"
-                                   class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         </div>
                     </td>
                     {% endfor %}

@@ -52,7 +52,9 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
 @login_required
 def gestionar_trabajadores(request):
     usuarios = User.objects.filter(activo=True)
-    return render(request, 'empleados/gestionar_trabajadores.html', {'usuarios': usuarios})
+    departamentos = Departamento.objects.all()
+    roles = RolEmpleado.objects.all()    
+    return render(request, 'empleados/gestionar_trabajadores.html', {'usuarios': usuarios, 'departamentos': departamentos, 'roles': roles})
 
 @login_required
 @require_http_methods(["POST"])
@@ -173,7 +175,6 @@ def editar_evaluacion(request, evaluacion_id):
             for empleado in empleados:
                 for criterio in criterios:
                     puntuacion = request.POST.get(f'puntuacion_{empleado.id}_{criterio.id}')
-                    concepto = request.POST.get(f'concepto_{empleado.id}_{criterio.id}', '')
                     
                     if puntuacion:
                         EvaluacionDetalle.objects.update_or_create(
@@ -182,7 +183,6 @@ def editar_evaluacion(request, evaluacion_id):
                             criterio=criterio,
                             defaults={
                                 'puntuacion': puntuacion,
-                                'concepto': concepto
                             }
                         )
             
@@ -194,7 +194,6 @@ def editar_evaluacion(request, evaluacion_id):
         key = f"{detalle.empleado.id}_{detalle.criterio.id}"
         evaluaciones[key] = {
             'puntuacion': detalle.puntuacion,
-            'concepto': detalle.concepto
         }
     
     return render(request, 'empleados/editar_evaluacion.html', {
