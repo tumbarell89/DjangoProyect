@@ -30,7 +30,7 @@ class UserEmpleadoForm(forms.ModelForm):
 class CriterioEvaluacionForm(forms.ModelForm):
     class Meta:
         model = CriterioEvaluacion
-        fields = ['denominacion', 'rol']
+        fields = ['denominacion', 'rol', 'generico']
 
 class EvaluacionForm(forms.ModelForm):
     mes_inicial = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))

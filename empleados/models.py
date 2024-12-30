@@ -28,6 +28,7 @@ class Empleado(models.Model):
 class CriterioEvaluacion(models.Model):
     denominacion = models.CharField(max_length=200)
     rol = models.ForeignKey(RolEmpleado, on_delete=models.CASCADE)
+    generico = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.denominacion} - {self.rol}"

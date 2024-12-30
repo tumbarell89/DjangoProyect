@@ -138,6 +138,7 @@ def obtener_criterio(request, criterio_id):
         'id': criterio.id,
         'denominacion': criterio.denominacion,
         'rol': criterio.rol.id,
+        'generico': criterio.generico,
     }
     return JsonResponse(data)
 
