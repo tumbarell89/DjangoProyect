@@ -18,6 +18,8 @@ from .serializers import (
     EmpleadoSerializer, DepartamentoSerializer, RolEmpleadoSerializer,
     CriterioEvaluacionSerializer, EvaluacionSerializer
 )
+from .models import Evaluacion, EvaluacionDetalle, Empleado
+from datetime import datetime
 
 # Existing view functions...
 
@@ -211,4 +213,48 @@ def eliminar_evaluacion(request, evaluacion_id):
         evaluacion.delete()
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error'}, status=400)
+
+@login_required
+def calculo_puntuaciones(request):
+    if request.method == 'POST':
+        fecha_inicial = request.POST.get('fecha_inicial')
+        fecha_final = request.POST.get('fecha_final')
+        
+        if not fecha_inicial or not fecha_final:
+            return JsonResponse({'error': 'Fechas no proporcionadas'}, status=400)
+
+        fecha_inicial = datetime.strptime(fecha_inicial, '%Y-%m-%d').date()
+        fecha_final = datetime.strptime(fecha_final, '%Y-%m-%d').date()
+
+        evaluaciones = Evaluacion.objects.filter(fecha__range=(fecha_inicial, fecha_final))
+        
+        if 'evaluaciones' in request.POST:
+            # Cálculo de puntuaciones
+            evaluaciones_ids = request.POST.getlist('evaluaciones')
+            evaluaciones = Evaluacion.objects.filter(id__in=evaluaciones_ids)
+            resultados = EvaluacionDetalle.get_promedios_y_sumas(evaluaciones)
+
+            empleados = Empleado.objects.all()
+            datos_empleados = []
+
+            for empleado in empleados:
+                resultado = next((r for r in resultados if r['empleado'] == empleado.id), None)
+                datos_empleados.append({
+                    'nombre': f"{empleado.user.first_name} {empleado.user.last_name}",
+                    'promedio': resultado['promedio'] if resultado else 0,
+                    'suma': resultado['suma'] if resultado else 0
+                })
+
+            return JsonResponse({'empleados': datos_empleados})
+        else:
+            # Búsqueda de evaluaciones
+            evaluaciones_data = [{
+                'id': eval.id,
+                'fecha': eval.fecha.strftime('%Y-%m-%d'),
+                'mes_inicial': eval.mes_inicial.strftime('%Y-%m-%d'),
+                'mes_final': eval.mes_final.strftime('%Y-%m-%d')
+            } for eval in evaluaciones]
+            return JsonResponse({'evaluaciones': evaluaciones_data})
+
+    return render(request, 'empleados/calculo_puntuaciones.html')
 

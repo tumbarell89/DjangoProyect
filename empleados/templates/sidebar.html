@@ -5,7 +5,7 @@
         <a href="{% url 'gestionar_trabajadores' %}" class="block py-2 px-4 hover:bg-blue-700">Gestionar Trabajadores</a>
         <a href="{% url 'gestionar_criterios_evaluacion' %}" class="block py-2 px-4 hover:bg-blue-700">Gestionar Criterios de Evaluación</a>
         <a href="{% url 'gestionar_evaluaciones' %}" class="block py-2 px-4 hover:bg-blue-700">Gestionar Evaluaciones</a>
-        <a href="#" class="block py-2 px-4 hover:bg-blue-700">Cálculo de Puntuaciones</a>
+        <a href="{% url 'calculo_puntuaciones' %}" class="block py-2 px-4 hover:bg-blue-700">Cálculo de Puntuaciones</a>
         <a href="#" class="block py-2 px-4 hover:bg-blue-700">Reportes y Análisis</a>
         <li>
             <form method="post" action="{% url 'logout' %}">
