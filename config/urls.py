@@ -33,6 +33,10 @@ urlpatterns = [
 
     # Cálculo de puntuaciones
     path('calculo-puntuaciones/', views.calculo_puntuaciones, name='calculo_puntuaciones'),
+    
+    # Reportes y análisis
+    path('reportes-analisis/', views.reportes_analisis, name='reportes_analisis'),
+
 ]
 
 router = DefaultRouter()
