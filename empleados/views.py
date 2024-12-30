@@ -20,6 +20,7 @@ from .serializers import (
 )
 from .models import Evaluacion, EvaluacionDetalle, Empleado
 from datetime import datetime
+from operator import itemgetter
 
 # Existing view functions...
 
@@ -170,41 +171,49 @@ def crear_evaluacion(request):
 @login_required
 def editar_evaluacion(request, evaluacion_id):
     evaluacion = get_object_or_404(Evaluacion, id=evaluacion_id)
-    empleados = Empleado.objects.filter(user__activo=True)
-    criterios = CriterioEvaluacion.objects.all()
-    
     if request.method == 'POST':
-        with transaction.atomic():
-            for empleado in empleados:
-                for criterio in criterios:
-                    puntuacion = request.POST.get(f'puntuacion_{empleado.id}_{criterio.id}')
+        form = EvaluacionForm(request.POST, instance=evaluacion)
+        if form.is_valid():
+            evaluacion = form.save()
+            
+            for key, value in request.POST.items():
+                if key.startswith('puntuacion_'):
+                    _, empleado_id, criterio_id = key.split('_')
+                    empleado = Empleado.objects.get(id=empleado_id)
+                    criterio = CriterioEvaluacion.objects.get(id=criterio_id)
+                    concepto = request.POST.get(f'concepto_{empleado_id}_{criterio_id}', '')
                     
-                    if puntuacion:
-                        EvaluacionDetalle.objects.update_or_create(
-                            evaluacion=evaluacion,
-                            empleado=empleado,
-                            criterio=criterio,
-                            defaults={
-                                'puntuacion': puntuacion,
-                            }
-                        )
+                    EvaluacionDetalle.objects.update_or_create(
+                        evaluacion=evaluacion,
+                        empleado=empleado,
+                        criterio=criterio,
+                        defaults={'puntuacion': value, 'concepto': concepto}
+                    )
             
             return redirect('gestionar_evaluaciones')
+    else:
+        form = EvaluacionForm(instance=evaluacion)
     
-    # Obtener evaluaciones existentes
-    evaluaciones = {}
-    for detalle in evaluacion.detalles.all():
-        key = f"{detalle.empleado.id}_{detalle.criterio.id}"
-        evaluaciones[key] = {
-            'puntuacion': detalle.puntuacion,
-        }
+    empleados = Empleado.objects.all()
+    criterios = CriterioEvaluacion.objects.all()
+    evaluaciones = EvaluacionDetalle.objects.filter(evaluacion=evaluacion)
     
-    return render(request, 'empleados/editar_evaluacion.html', {
+    # Crear un diccionario para almacenar las evaluaciones existentes
+    evaluaciones_dict = {
+        f"{eval.empleado.id}_{eval.criterio.id}": {
+            'puntuacion': eval.puntuacion
+        } for eval in evaluaciones
+    }
+    
+    context = {
+        'form': form,
         'evaluacion': evaluacion,
         'empleados': empleados,
         'criterios': criterios,
-        'evaluaciones': evaluaciones
-    })
+        'evaluaciones': evaluaciones_dict
+    }
+    
+    return render(request, 'empleados/editar_evaluacion.html', context)
 
 @login_required
 def eliminar_evaluacion(request, evaluacion_id):
@@ -239,13 +248,17 @@ def calculo_puntuaciones(request):
 
             for empleado in empleados:
                 resultado = next((r for r in resultados if r['empleado'] == empleado.id), None)
-                datos_empleados.append({
-                    'nombre': f"{empleado.user.first_name} {empleado.user.last_name}",
-                    'promedio': resultado['promedio'] if resultado else 0,
-                    'suma': resultado['suma'] if resultado else 0
-                })
+                if resultado:
+                    datos_empleados.append({
+                        'nombre': f"{empleado.user.first_name} {empleado.user.last_name}",
+                        'promedio': resultado['promedio'],
+                        'suma': resultado['suma']
+                    })
 
-            return JsonResponse({'empleados': datos_empleados})
+            # Ordenar los resultados de mayor a menor promedio
+            datos_empleados_ordenados = sorted(datos_empleados, key=itemgetter('promedio'), reverse=True)
+
+            return JsonResponse({'empleados': datos_empleados_ordenados})
         else:
             # Búsqueda de evaluaciones
             evaluaciones_data = [{
