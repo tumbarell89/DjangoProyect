@@ -52,6 +52,11 @@
 
     <div id="graficasContainer" class="hidden">
         <h2 class="text-2xl font-bold mb-4">Gráficas de Análisis</h2>
+        <div class="mb-4">
+            <button id="exportarExcel" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Exportar a Excel
+            </button>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <h3 class="text-xl font-bold mb-2">Gráfica de Barras</h3>
@@ -193,6 +198,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    document.getElementById('exportarExcel').addEventListener('click', function() {
+        const formData = new FormData(seleccionForm);
+        formData.append('fecha_inicial', document.getElementById('fecha_inicial').value);
+        formData.append('fecha_final', document.getElementById('fecha_final').value);
+        formData.append('export', 'true');
+        
+        fetch('{% url "reportes_analisis" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'reportes_analisis.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error al exportar a Excel. Por favor, intente nuevamente.');
+        });
+    });
 });
 </script>
 {% endblock %}

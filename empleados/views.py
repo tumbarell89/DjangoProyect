@@ -22,6 +22,8 @@ from .models import Evaluacion, EvaluacionDetalle, Empleado
 from datetime import datetime
 from operator import itemgetter
 from django.db.models import Avg
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font
 
 # Existing view functions...
 
@@ -304,6 +306,83 @@ def reportes_analisis(request):
             return JsonResponse({
                 'labels': labels,
                 'data': data
+            })
+        else:
+            # Búsqueda de evaluaciones
+            evaluaciones_data = [{
+                'id': eval.id,
+                'fecha': eval.fecha.strftime('%Y-%m-%d'),
+                'mes_inicial': eval.mes_inicial.strftime('%Y-%m-%d'),
+                'mes_final': eval.mes_final.strftime('%Y-%m-%d')
+            } for eval in evaluaciones]
+            return JsonResponse({'evaluaciones': evaluaciones_data})
+
+    return render(request, 'empleados/reportes_analisis.html')
+
+def export_to_excel(data, filename):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Resultados"
+
+    # Escribir encabezados
+    headers = list(data[0].keys())
+    for col_num, header in enumerate(headers, 1):
+        col_letter = get_column_letter(col_num)
+        ws[f'{col_letter}1'] = header
+        ws[f'{col_letter}1'].font = Font(bold=True)
+
+    # Escribir datos
+    for row_num, row_data in enumerate(data, 2):
+        for col_num, (key, value) in enumerate(row_data.items(), 1):
+            ws.cell(row=row_num, column=col_num, value=value)
+
+    # Ajustar ancho de columnas
+    for column_cells in ws.columns:
+        length = max(len(str(cell.value)) for cell in column_cells)
+        ws.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    wb.save(response)
+    return response
+
+@login_required
+def reportes_analisis(request):
+    if request.method == 'POST':
+        fecha_inicial = request.POST.get('fecha_inicial')
+        fecha_final = request.POST.get('fecha_final')
+        
+        if not fecha_inicial or not fecha_final:
+            return JsonResponse({'error': 'Fechas no proporcionadas'}, status=400)
+
+        fecha_inicial = datetime.strptime(fecha_inicial, '%Y-%m-%d').date()
+        fecha_final = datetime.strptime(fecha_final, '%Y-%m-%d').date()
+
+        evaluaciones = Evaluacion.objects.filter(fecha__range=(fecha_inicial, fecha_final))
+        
+        if 'evaluaciones' in request.POST:
+            evaluaciones_ids = request.POST.getlist('evaluaciones')
+            evaluaciones = Evaluacion.objects.filter(id__in=evaluaciones_ids)
+            
+            # Calcular promedios
+            promedios = EvaluacionDetalle.objects.filter(evaluacion__in=evaluaciones).values(
+                'puntuacion'
+            ).annotate(
+                promedio=Avg('puntuacion')
+            ).order_by('puntuacion')
+
+            # Preparar datos para gráficas y exportación
+            data = [{'Puntuación': p['puntuacion'], 'Promedio': round(float(p['promedio']), 2)} for p in promedios]
+            
+            if 'export' in request.POST:
+                return export_to_excel(data, 'reportes_analisis.xlsx')
+            
+            labels = [f'Puntuación {p["Puntuación"]}' for p in data]
+            values = [p['Promedio'] for p in data]
+
+            return JsonResponse({
+                'labels': labels,
+                'data': values
             })
         else:
             # Búsqueda de evaluaciones
