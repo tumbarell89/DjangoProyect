@@ -38,7 +38,7 @@
                                 <option value="">Seleccione</option>
                                 {% for i in "12345" %}
                                 <option value="{{ i }}" 
-                                    {% if evaluaciones.puntuacion == i %}selected{% endif %}>
+                                    {% if evaluaciones|get_item:empleado.id|get_item:criterio.id|get_item:'puntuacion' == i %}selected{% endif %}>
                                     {{ i }}
                                 </option>
                                 {% endfor %}
@@ -85,4 +85,3 @@
     }
 </style>
 {% endblock %}
-
