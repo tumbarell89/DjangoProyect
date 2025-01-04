@@ -27,12 +27,18 @@ class Empleado(models.Model):
         return f"{self.user.first_name} {self.user.last_name}"
 
 class CriterioEvaluacion(models.Model):
-    denominacion = models.CharField(max_length=200)
-    rol = models.ForeignKey(RolEmpleado, on_delete=models.CASCADE)
+    denominacion = models.CharField(max_length=100)
+    rol = models.ForeignKey('RolEmpleado', on_delete=models.CASCADE, null=True, blank=True)
     generico = models.BooleanField(default=False)
 
+    def save(self, *args, **kwargs):
+        if self.generico:
+            # Si este criterio se está marcando como genérico, actualiza los demás
+            CriterioEvaluacion.objects.exclude(pk=self.pk).update(generico=False)
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.denominacion} - {self.rol}"
+        return self.denominacion
 
 class Evaluacion(models.Model):
     fecha = models.DateField(auto_now_add=True)
@@ -72,7 +78,7 @@ class EvaluacionDetalle(models.Model):
         
         return detalles.values('empleado').annotate(
             promedio=Avg('puntuacion'),
-            suma=Avg(detalles2.values())
+            suma=Sum('puntuacion')
         )
     
 # Añadir un campo 'activo' al modelo User
