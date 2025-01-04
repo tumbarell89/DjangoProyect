@@ -68,11 +68,11 @@ class EvaluacionDetalle(models.Model):
     def get_promedios_y_sumas(cls, evaluaciones, excluir_genericos=True):
         detalles = cls.objects.filter(evaluacion__in=evaluaciones)
         if excluir_genericos:
-            detalles = detalles.exclude(criterio__generico=True)
+            detalles2 = detalles.exclude(criterio__generico=True)
         
         return detalles.values('empleado').annotate(
             promedio=Avg('puntuacion'),
-            suma=Sum('puntuacion')
+            suma=Avg(detalles2.values())
         )
     
 # Añadir un campo 'activo' al modelo User

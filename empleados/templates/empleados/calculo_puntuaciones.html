@@ -64,10 +64,10 @@
                         Empleado
                     </th>
                     <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Promedio
+                        Promedio (todos los criterios)
                     </th>
                     <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Suma
+                        Promedio (sin criterios genéricos)
                     </th>
                 </tr>
             </thead>
@@ -150,10 +150,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             <p class="text-gray-900 whitespace-no-wrap">${empleado.nombre}</p>
                         </td>
                         <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                            <p class="text-gray-900 whitespace-no-wrap">${empleado.promedio.toFixed(2)}</p>
+                            <p class="text-gray-900 whitespace-no-wrap">${empleado.promedio}</p>
                         </td>
                         <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                            <p class="text-gray-900 whitespace-no-wrap">${empleado.suma}</p>
+                            <p class="text-gray-900 whitespace-no-wrap">${empleado.promedio_no_generico}</p>
                         </td>
                     `;
                     resultadosBody.appendChild(tr);
@@ -193,10 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Ocurrió un error al exportar a Excel. Por favor, intente nuevamente.');
         });
     });
 });

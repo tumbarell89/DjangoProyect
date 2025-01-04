@@ -59,12 +59,12 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-                <h3 class="text-xl font-bold mb-2">Gráfica de Barras</h3>
+                <h3 class="text-xl font-bold mb-2">Empleados por Puntuación</h3>
                 <canvas id="barChart"></canvas>
             </div>
             <div>
-                <h3 class="text-xl font-bold mb-2">Gráfica de Pastel</h3>
-                <canvas id="pieChart"></canvas>
+                <h3 class="text-xl font-bold mb-2">Evaluaciones por Criterio</h3>
+                <div id="pieChartsContainer"></div>
             </div>
         </div>
     </div>
@@ -133,9 +133,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.labels && data.data) {
+            if (data.bar_chart && data.pie_charts) {
                 graficasContainer.classList.remove('hidden');
-                generarGraficas(data.labels, data.data);
+                generarGraficas(data.bar_chart, data.pie_charts);
             } else {
                 graficasContainer.classList.add('hidden');
                 alert('No se encontraron datos para generar las gráficas.');
@@ -147,16 +147,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    function generarGraficas(labels, data) {
+    function generarGraficas(barChartData, pieChartsData) {
         // Gráfica de Barras
         const ctxBar = document.getElementById('barChart').getContext('2d');
         new Chart(ctxBar, {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: barChartData.labels,
                 datasets: [{
-                    label: 'Promedio de Puntuaciones',
-                    data: data,
+                    label: 'Cantidad de Empleados',
+                    data: barChartData.data,
                     backgroundColor: 'rgba(75, 192, 192, 0.6)',
                     borderColor: 'rgba(75, 192, 192, 1)',
                     borderWidth: 1
@@ -165,37 +165,68 @@ document.addEventListener('DOMContentLoaded', function() {
             options: {
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Cantidad de Empleados'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Puntuación'
+                        }
                     }
                 }
             }
         });
 
-        // Gráfica de Pastel
-        const ctxPie = document.getElementById('pieChart').getContext('2d');
-        new Chart(ctxPie, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.6)',
-                        'rgba(54, 162, 235, 0.6)',
-                        'rgba(255, 206, 86, 0.6)',
-                        'rgba(75, 192, 192, 0.6)',
-                        'rgba(153, 102, 255, 0.6)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            }
+        // Gráficas de Pastel
+        const pieChartsContainer = document.getElementById('pieChartsContainer');
+        pieChartsContainer.innerHTML = ''; // Limpiar gráficas anteriores
+
+        Object.entries(pieChartsData).forEach(([criterio, data], index) => {
+            const canvas = document.createElement('canvas');
+            canvas.id = `pieChart${index}`;
+            pieChartsContainer.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: criterio
+                        }
+                    }
+                }
+            });
         });
     }
 

@@ -21,9 +21,11 @@ from .serializers import (
 from .models import Evaluacion, EvaluacionDetalle, Empleado
 from datetime import datetime
 from operator import itemgetter
-from django.db.models import Avg
+from django.db.models import Avg, Count
+import openpyxl
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
+import simplejson
 
 # Existing view functions...
 
@@ -189,25 +191,29 @@ def editar_evaluacion(request, evaluacion_id):
                             empleado=empleado,
                             criterio=criterio,
                             defaults={
-                                'puntuacion': puntuacion,
+                                'puntuacion': int(puntuacion),
                             }
                         )
             
             return redirect('gestionar_evaluaciones')
     
     # Obtener evaluaciones existentes
-    evaluaciones = {}
+    evaluaciones_data = {}
     for detalle in evaluacion.detalles.all():
-        key = f"{detalle.empleado.id}_{detalle.criterio.id}"
-        evaluaciones[key] = {
-            'puntuacion': detalle.puntuacion,
-        }
+        if detalle.empleado.id not in evaluaciones_data:
+            evaluaciones_data[detalle.empleado.id] = {}
+        evaluaciones_data[detalle.empleado.id][detalle.criterio.id] = detalle.puntuacion
+    
+    # Serializar los datos usando simplejson
+    evaluaciones_json = simplejson.dumps(evaluaciones_data)
+    
+    print("Loaded evaluaciones:", evaluaciones_json)  # Debug: Verificar evaluaciones cargadas
     
     return render(request, 'empleados/editar_evaluacion.html', {
         'evaluacion': evaluacion,
         'empleados': empleados,
         'criterios': criterios,
-        'evaluaciones': evaluaciones
+        'evaluaciones_json': evaluaciones_json
     })
 
 @login_required
@@ -233,27 +239,32 @@ def calculo_puntuaciones(request):
         evaluaciones = Evaluacion.objects.filter(fecha__range=(fecha_inicial, fecha_final))
         
         if 'evaluaciones' in request.POST:
-            # Cálculo de puntuaciones
             evaluaciones_ids = request.POST.getlist('evaluaciones')
-            evaluaciones = Evaluacion.objects.filter(id__in=evaluaciones_ids)
-            resultados = EvaluacionDetalle.get_promedios_y_sumas(evaluaciones)
-
-            empleados = Empleado.objects.all()
-            datos_empleados = []
-
-            for empleado in empleados:
-                resultado = next((r for r in resultados if r['empleado'] == empleado.id), None)
-                if resultado:
-                    datos_empleados.append({
-                        'nombre': f"{empleado.user.first_name} {empleado.user.last_name}",
-                        'promedio': resultado['promedio'],
-                        'suma': resultado['suma']
-                    })
-
-            # Ordenar los resultados de mayor a menor promedio
-            datos_empleados_ordenados = sorted(datos_empleados, key=itemgetter('promedio'), reverse=True)
-
-            return JsonResponse({'empleados': datos_empleados_ordenados})
+            evaluaciones = evaluaciones.filter(id__in=evaluaciones_ids)
+            
+            resultados = []
+            for empleado in Empleado.objects.filter(evaluaciondetalle__evaluacion__in=evaluaciones).distinct():
+                detalles = EvaluacionDetalle.objects.filter(
+                    evaluacion__in=evaluaciones,
+                    empleado=empleado
+                )
+                
+                # Calcular promedio incluyendo todos los criterios
+                promedio_total = detalles.aggregate(Avg('puntuacion'))['puntuacion__avg']
+                
+                # Calcular promedio excluyendo criterios genéricos
+                promedio_no_generico = detalles.exclude(criterio__generico=True).aggregate(Avg('puntuacion'))['puntuacion__avg']
+                
+                resultados.append({
+                    'nombre': empleado.user.get_full_name(),
+                    'promedio': round(promedio_total, 2) if promedio_total else 0,
+                    'promedio_no_generico': round(promedio_no_generico, 2) if promedio_no_generico else 0,
+                })
+            
+            if 'export' in request.POST:
+                return export_to_excel(resultados, 'calculo_puntuaciones.xlsx')
+            
+            return JsonResponse({'empleados': resultados})
         else:
             # Búsqueda de evaluaciones
             evaluaciones_data = [{
@@ -266,67 +277,23 @@ def calculo_puntuaciones(request):
 
     return render(request, 'empleados/calculo_puntuaciones.html')
 
-@login_required
-def reportes_analisis(request):
-    if request.method == 'POST':
-        fecha_inicial = request.POST.get('fecha_inicial')
-        fecha_final = request.POST.get('fecha_final')
-        
-        if not fecha_inicial or not fecha_final:
-            return JsonResponse({'error': 'Fechas no proporcionadas'}, status=400)
-
-        fecha_inicial = datetime.strptime(fecha_inicial, '%Y-%m-%d').date()
-        fecha_final = datetime.strptime(fecha_final, '%Y-%m-%d').date()
-
-        evaluaciones = Evaluacion.objects.filter(fecha__range=(fecha_inicial, fecha_final))
-        
-        if 'evaluaciones' in request.POST:
-            evaluaciones_ids = request.POST.getlist('evaluaciones')
-            evaluaciones = Evaluacion.objects.filter(id__in=evaluaciones_ids)
-            
-            # Calcular promedios
-            promedios = EvaluacionDetalle.objects.filter(evaluacion__in=evaluaciones).values(
-                'puntuacion'
-            ).annotate(
-                promedio=Avg('puntuacion')
-            ).order_by('puntuacion')
-
-            # Preparar datos para gráficas
-            labels = [f'Puntuación {p["puntuacion"]}' for p in promedios]
-            data = [float(p['promedio']) for p in promedios]
-
-            return JsonResponse({
-                'labels': labels,
-                'data': data
-            })
-        else:
-            # Búsqueda de evaluaciones
-            evaluaciones_data = [{
-                'id': eval.id,
-                'fecha': eval.fecha.strftime('%Y-%m-%d'),
-                'mes_inicial': eval.mes_inicial.strftime('%Y-%m-%d'),
-                'mes_final': eval.mes_final.strftime('%Y-%m-%d')
-            } for eval in evaluaciones]
-            return JsonResponse({'evaluaciones': evaluaciones_data})
-
-    return render(request, 'empleados/reportes_analisis.html')
-
 def export_to_excel(data, filename):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Resultados"
 
     # Escribir encabezados
-    headers = list(data[0].keys())
+    headers = ['Empleado', 'Promedio (todos los criterios)', 'Promedio (sin criterios genéricos)']
     for col_num, header in enumerate(headers, 1):
         col_letter = get_column_letter(col_num)
         ws[f'{col_letter}1'] = header
         ws[f'{col_letter}1'].font = Font(bold=True)
 
     # Escribir datos
-    for row_num, row_data in enumerate(data, 2):
-        for col_num, (key, value) in enumerate(row_data.items(), 1):
-            ws.cell(row=row_num, column=col_num, value=value)
+    for row_num, empleado in enumerate(data, 2):
+        ws.cell(row=row_num, column=1, value=empleado['nombre'])
+        ws.cell(row=row_num, column=2, value=empleado['promedio'])
+        ws.cell(row=row_num, column=3, value=empleado['promedio_no_generico'])
 
     # Ajustar ancho de columnas
     for column_cells in ws.columns:
@@ -354,27 +321,41 @@ def reportes_analisis(request):
         
         if 'evaluaciones' in request.POST:
             evaluaciones_ids = request.POST.getlist('evaluaciones')
-            evaluaciones = Evaluacion.objects.filter(id__in=evaluaciones_ids)
+            evaluaciones = evaluaciones.filter(id__in=evaluaciones_ids)
             
-            # Calcular promedios
-            promedios = EvaluacionDetalle.objects.filter(evaluacion__in=evaluaciones).values(
-                'puntuacion'
-            ).annotate(
-                promedio=Avg('puntuacion')
+            # Datos para la gráfica de barras
+            empleados_por_puntuacion = EvaluacionDetalle.objects.filter(
+                evaluacion__in=evaluaciones
+            ).values('puntuacion').annotate(
+                cantidad=Count('empleado', distinct=True)
             ).order_by('puntuacion')
 
-            # Preparar datos para gráficas y exportación
-            data = [{'Puntuación': p['puntuacion'], 'Promedio': round(float(p['promedio']), 2)} for p in promedios]
-            
-            if 'export' in request.POST:
-                return export_to_excel(data, 'reportes_analisis.xlsx')
-            
-            labels = [f'Puntuación {p["Puntuación"]}' for p in data]
-            values = [p['Promedio'] for p in data]
+            bar_labels = [f"Puntuación {p['puntuacion']}" for p in empleados_por_puntuacion]
+            bar_data = [p['cantidad'] for p in empleados_por_puntuacion]
 
+            # Datos para la gráfica de pastel
+            criterios_evaluaciones = EvaluacionDetalle.objects.filter(
+                evaluacion__in=evaluaciones
+            ).values('criterio__denominacion', 'puntuacion').annotate(
+                cantidad=Count('id')
+            ).order_by('criterio__denominacion', 'puntuacion')
+
+            pie_data = {}
+            for ce in criterios_evaluaciones:
+                criterio = ce['criterio__denominacion']
+                puntuacion = ce['puntuacion']
+                cantidad = ce['cantidad']
+                if criterio not in pie_data:
+                    pie_data[criterio] = {'labels': [], 'data': []}
+                pie_data[criterio]['labels'].append(f"Puntuación {puntuacion}")
+                pie_data[criterio]['data'].append(cantidad)
+
+            if 'export' in request.POST:
+                return export_to_excel_analisis(empleados_por_puntuacion, criterios_evaluaciones, 'reportes_analisis.xlsx')
+            
             return JsonResponse({
-                'labels': labels,
-                'data': values
+                'bar_chart': {'labels': bar_labels, 'data': bar_data},
+                'pie_charts': pie_data
             })
         else:
             # Búsqueda de evaluaciones
@@ -387,3 +368,30 @@ def reportes_analisis(request):
             return JsonResponse({'evaluaciones': evaluaciones_data})
 
     return render(request, 'empleados/reportes_analisis.html')
+
+def export_to_excel_analisis(empleados_por_puntuacion, criterios_evaluaciones, filename):
+    wb = openpyxl.Workbook()
+    
+    # Hoja para empleados por puntuación
+    ws_empleados = wb.active
+    ws_empleados.title = "Empleados por Puntuación"
+    ws_empleados.append(["Puntuación", "Cantidad de Empleados"])
+    for item in empleados_por_puntuacion:
+        ws_empleados.append([item['puntuacion'], item['cantidad']])
+
+    # Hoja para criterios y evaluaciones
+    ws_criterios = wb.create_sheet("Criterios y Evaluaciones")
+    ws_criterios.append(["Criterio", "Puntuación", "Cantidad"])
+    for item in criterios_evaluaciones:
+        ws_criterios.append([item['criterio__denominacion'], item['puntuacion'], item['cantidad']])
+
+    # Ajustar ancho de columnas
+    for sheet in [ws_empleados, ws_criterios]:
+        for column_cells in sheet.columns:
+            length = max(len(str(cell.value)) for cell in column_cells)
+            sheet.column_dimensions[get_column_letter(column_cells[0].column)].width = length + 2
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename={filename}'
+    wb.save(response)
+    return response

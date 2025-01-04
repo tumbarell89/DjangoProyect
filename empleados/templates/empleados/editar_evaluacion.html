@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load custom_filters %}
 
 {% block content %}
 <div class="container mx-auto px-4">
@@ -11,7 +10,7 @@
         </div>
     </div>
 
-    <form method="post" class="bg-white shadow-md rounded-lg overflow-x-auto">
+    <form id="evaluacionForm" method="post" class="bg-white shadow-md rounded-lg overflow-x-auto">
         {% csrf_token %}
         <table class="min-w-full">
             <thead>
@@ -34,13 +33,11 @@
                     <td class="py-3 px-6">
                         <div class="flex flex-col space-y-2">
                             <select name="puntuacion_{{ empleado.id }}_{{ criterio.id }}" 
+                                    id="puntuacion_{{ empleado.id }}_{{ criterio.id }}"
                                     class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">Seleccione</option>
                                 {% for i in "12345" %}
-                                <option value="{{ i }}" 
-                                    {% if evaluaciones|get_item:empleado.id|get_item:criterio.id|get_item:'puntuacion' == i %}selected{% endif %}>
-                                    {{ i }}
-                                </option>
+                                <option value="{{ i }}">{{ i }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -62,6 +59,22 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const evaluacionesData = JSON.parse('{{ evaluaciones_json|safe }}');
+    
+    for (const empleadoId in evaluacionesData) {
+        for (const criterioId in evaluacionesData[empleadoId]) {
+            const selectId = `puntuacion_${empleadoId}_${criterioId}`;
+            const selectElement = document.getElementById(selectId);
+            if (selectElement) {
+                selectElement.value = evaluacionesData[empleadoId][criterioId];
+            }
+        }
+    }
+});
+</script>
 
 <style>
     /* Estilos adicionales para mejorar la experiencia de usuario */
@@ -85,3 +98,4 @@
     }
 </style>
 {% endblock %}
+
