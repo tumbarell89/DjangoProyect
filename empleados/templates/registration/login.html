@@ -5,6 +5,7 @@
     <div class="w-full max-w-md">
         <form method="post" class="bg-white shadow-lg rounded-lg px-12 pt-6 pb-8 mb-4">
             {% csrf_token %}
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Sistema de Gestión De Evaluación de Trabajadores</h2>
             <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Iniciar sesión</h2>
             {% if form.errors %}
                 <p class="text-red-500 text-xs italic mb-4">Tu usuario o contraseña son incorrectos. Por favor, intenta de nuevo.</p>

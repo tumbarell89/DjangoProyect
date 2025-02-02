@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User
 from django.db import transaction
 from .models import (
@@ -260,6 +260,9 @@ def calculo_puntuaciones(request):
                     'promedio': round(promedio_total, 2) if promedio_total else 0,
                     'promedio_no_generico': round(promedio_no_generico, 2) if promedio_no_generico else 0,
                 })
+            
+            # Ordenar resultados por promedio (todos los criterios) de forma descendente
+            resultados.sort(key=lambda x: x['promedio'], reverse=True)
             
             if 'export' in request.POST:
                 return export_to_excel(resultados, 'calculo_puntuaciones.xlsx')
