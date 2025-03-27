@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from .models import (
     Empleado, Departamento, RolEmpleado, CriterioEvaluacion,
-    Evaluacion, EvaluacionDetalle
+    Evaluacion, EvaluacionDetalle, Habilidad, Aptitud, Competencia
 )
 from .forms import (
     UserEmpleadoForm, CriterioEvaluacionForm, EvaluacionForm,
@@ -59,10 +59,21 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
 
 @login_required
 def gestionar_trabajadores(request):
-    usuarios = User.objects.filter(activo=True)
+    usuarios = User.objects.filter(is_active=True)
     departamentos = Departamento.objects.all()
-    roles = RolEmpleado.objects.all()    
-    return render(request, 'empleados/gestionar_trabajadores.html', {'usuarios': usuarios, 'departamentos': departamentos, 'roles': roles})
+    roles = RolEmpleado.objects.all()
+    habilidades = Habilidad.objects.all()
+    aptitudes = Aptitud.objects.all()
+    competencias = Competencia.objects.all()
+    
+    return render(request, 'empleados/gestionar_trabajadores.html', {
+        'usuarios': usuarios,
+        'departamentos': departamentos,
+        'roles': roles,
+        'habilidades': habilidades,
+        'aptitudes': aptitudes,
+        'competencias': competencias
+    })
 
 @login_required
 @require_http_methods(["POST"])
@@ -70,43 +81,113 @@ def crear_editar_trabajador(request):
     user_id = request.POST.get('user_id')
     if user_id:
         user = get_object_or_404(User, id=user_id)
-        form = UserEmpleadoForm(request.POST, instance=user)
     else:
-        form = UserEmpleadoForm(request.POST)
-
-    if form.is_valid():
-        form.save()
-        return JsonResponse({'status': 'success'})
-    else:
-        return JsonResponse({'status': 'error', 'errors': form.errors})
+        user = None
+    
+    if request.method == 'POST':
+        # Si es un nuevo usuario, generar un nombre de usuario único
+        if not user:
+            # Generar un nombre de usuario basado en el nombre y apellido o un UUID si no están disponibles
+            first_name = request.POST.get('first_name', '')
+            last_name = request.POST.get('last_name', '')
+            if first_name and last_name:
+                username = f"{first_name.lower()[0]}{last_name.lower().replace(' ', '')}"
+                # Verificar si el nombre de usuario ya existe
+                if User.objects.filter(username=username).exists():
+                    username = f"{username}{User.objects.count()}"
+            else:
+                # Si no hay nombre o apellido, usar un UUID
+                username = str(uuid.uuid4())[:8]
+            
+            # Crear un nuevo usuario con el nombre de usuario generado
+            user = User(username=username)
+        
+        # Actualizar los campos del usuario
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        user.is_active = 'activo' in request.POST
+        user.save()
+        
+        # Actualizar o crear el empleado asociado
+        empleado, created = Empleado.objects.get_or_create(user=user)
+        
+        # Actualizar departamento y rol
+        departamento_id = request.POST.get('departamento')
+        if departamento_id:
+            empleado.departamento = Departamento.objects.get(id=departamento_id)
+        else:
+            empleado.departamento = None
+            
+        rol_id = request.POST.get('rol')
+        if rol_id:
+            empleado.rol = RolEmpleado.objects.get(id=rol_id)
+        else:
+            empleado.rol = None
+            
+        empleado.save()
+        
+        # Actualizar habilidades, aptitudes y competencias
+        habilidades_ids = request.POST.getlist('habilidades')
+        aptitudes_ids = request.POST.getlist('aptitudes')
+        competencias_ids = request.POST.getlist('competencias')
+        
+        empleado.habilidades.clear()
+        if habilidades_ids:
+            empleado.habilidades.add(*Habilidad.objects.filter(id__in=habilidades_ids))
+            
+        empleado.aptitudes.clear()
+        if aptitudes_ids:
+            empleado.aptitudes.add(*Aptitud.objects.filter(id__in=aptitudes_ids))
+            
+        empleado.competencias.clear()
+        if competencias_ids:
+            empleado.competencias.add(*Competencia.objects.filter(id__in=competencias_ids))
+        
+        return JsonResponse({'status': 'success', 'message': 'Usuario guardado exitosamente.'})
+    
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 
 @login_required
 @require_http_methods(["POST"])
 def eliminar_trabajador(request, user_id):
     user = get_object_or_404(User, id=user_id)
-    user.activo = False
+    user.is_active = False
     user.save()
-    return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'success', 'message': 'Usuario eliminado exitosamente.'})
 
 @login_required
 @require_http_methods(["GET"])
 def obtener_trabajador(request, user_id):
     user = get_object_or_404(User, id=user_id)
-    empleado = user.empleado if hasattr(user, 'empleado') else None
+    try:
+        empleado = user.empleado
+        habilidades = list(empleado.habilidades.values_list('id', flat=True))
+        aptitudes = list(empleado.aptitudes.values_list('id', flat=True))
+        competencias = list(empleado.competencias.values_list('id', flat=True))
+        departamento = empleado.departamento.id if empleado.departamento else None
+        rol = empleado.rol.id if empleado.rol else None
+    except Empleado.DoesNotExist:
+        habilidades = []
+        aptitudes = []
+        competencias = []
+        departamento = None
+        rol = None
+    
     data = {
         'id': user.id,
         'username': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
-        'is_superuser': user.is_superuser,
-        'activo': user.activo,
-        'departamento': empleado.departamento.id if empleado and empleado.departamento else None,
-        'rol': empleado.rol.id if empleado and empleado.rol else None,
-        'habilidades': empleado.habilidades if empleado else '',
-        'aptitudes': empleado.aptitudes if empleado else '',
-        'competencias': empleado.competencias if empleado else '',
+        'activo': user.is_active,
+        'departamento': departamento,
+        'rol': rol,
+        'habilidades': habilidades,
+        'aptitudes': aptitudes,
+        'competencias': competencias
     }
+    
     return JsonResponse(data)
 
 @login_required

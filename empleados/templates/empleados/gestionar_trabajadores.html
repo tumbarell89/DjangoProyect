@@ -13,7 +13,6 @@
         <table class="min-w-full leading-normal">
             <thead>
                 <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                    <th class="py-3 px-6 text-left">Usuario</th>
                     <th class="py-3 px-6 text-left">Nombre</th>
                     <th class="py-3 px-6 text-left">Apellido</th>
                     <th class="py-3 px-6 text-left">Email</th>
@@ -25,9 +24,6 @@
             <tbody class="text-gray-600 text-sm font-light">
                 {% for usuario in usuarios %}
                 <tr class="border-b border-gray-200 hover:bg-gray-100">
-                    <td class="py-3 px-6 text-left whitespace-nowrap">
-                        <span class="font-medium">{{ usuario.username }}</span>
-                    </td>
                     <td class="py-3 px-6 text-left">
                         <span>{{ usuario.first_name }}</span>
                     </td>
@@ -60,7 +56,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="py-3 px-6 text-center">No hay usuarios registrados.</td>
+                    <td colspan="6" class="py-3 px-6 text-center">No hay usuarios registrados.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -78,20 +74,16 @@
                     {% csrf_token %}
                     <input type="hidden" id="userId" name="user_id">
                     <div class="col-span-1">
-                        <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Usuario:</label>
-                        <input type="text" id="username" name="username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    </div>
-                    <div class="col-span-1">
-                        <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
-                        <input type="email" id="email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    </div>
-                    <div class="col-span-1">
                         <label for="first_name" class="block text-gray-700 text-sm font-bold mb-2">Nombre:</label>
                         <input type="text" id="first_name" name="first_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     </div>
                     <div class="col-span-1">
                         <label for="last_name" class="block text-gray-700 text-sm font-bold mb-2">Apellido:</label>
                         <input type="text" id="last_name" name="last_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="col-span-2">
+                        <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                        <input type="email" id="email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     </div>
                     <div class="col-span-1">
                         <label for="departamento" class="block text-gray-700 text-sm font-bold mb-2">Departamento:</label>
@@ -112,22 +104,43 @@
                         </select>
                     </div>
                     <div class="col-span-2">
-                        <label for="habilidades" class="block text-gray-700 text-sm font-bold mb-2">Habilidades:</label>
-                        <textarea id="habilidades" name="habilidades" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Habilidades:</label>
+                        <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded">
+                            {% for habilidad in habilidades %}
+                            <div>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="habilidades" value="{{ habilidad.id }}" class="form-checkbox h-5 w-5 text-blue-600">
+                                    <span class="ml-2">{{ habilidad.nombre }}</span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                     <div class="col-span-2">
-                        <label for="aptitudes" class="block text-gray-700 text-sm font-bold mb-2">Aptitudes:</label>
-                        <textarea id="aptitudes" name="aptitudes" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Aptitudes:</label>
+                        <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded">
+                            {% for aptitud in aptitudes %}
+                            <div>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="aptitudes" value="{{ aptitud.id }}" class="form-checkbox h-5 w-5 text-blue-600">
+                                    <span class="ml-2">{{ aptitud.nombre }}</span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                     <div class="col-span-2">
-                        <label for="competencias" class="block text-gray-700 text-sm font-bold mb-2">Competencias:</label>
-                        <textarea id="competencias" name="competencias" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
-                    </div>
-                    <div class="col-span-1">
-                        <label for="is_superuser" class="inline-flex items-center">
-                            <input type="checkbox" id="is_superuser" name="is_superuser" class="form-checkbox h-5 w-5 text-blue-600">
-                            <span class="ml-2 text-gray-700">Es superusuario</span>
-                        </label>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Competencias:</label>
+                        <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded">
+                            {% for competencia in competencias %}
+                            <div>
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="competencias" value="{{ competencia.id }}" class="form-checkbox h-5 w-5 text-blue-600">
+                                    <span class="ml-2">{{ competencia.nombre }}</span>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                     <div class="col-span-1">
                         <label for="activo" class="inline-flex items-center">
@@ -173,6 +186,10 @@ document.addEventListener('DOMContentLoaded', function() {
     btnAddUser.addEventListener('click', function() {
         showModal('Adicionar Usuario');
         document.getElementById('userId').value = '';
+        // Limpiar todas las casillas de verificación
+        form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
     });
 
     editButtons.forEach(button => {
@@ -212,17 +229,41 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 document.getElementById('userId').value = data.id;
-                document.getElementById('username').value = data.username;
                 document.getElementById('first_name').value = data.first_name;
                 document.getElementById('last_name').value = data.last_name;
                 document.getElementById('email').value = data.email;
                 document.getElementById('departamento').value = data.departamento || '';
                 document.getElementById('rol').value = data.rol || '';
-                document.getElementById('habilidades').value = data.habilidades;
-                document.getElementById('aptitudes').value = data.aptitudes;
-                document.getElementById('competencias').value = data.competencias;
-                document.getElementById('is_superuser').checked = data.is_superuser;
                 document.getElementById('activo').checked = data.activo;
+                
+                // Limpiar todas las casillas de verificación primero
+                form.querySelectorAll('input[type="checkbox"][name="habilidades"], input[type="checkbox"][name="aptitudes"], input[type="checkbox"][name="competencias"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                // Marcar las habilidades seleccionadas
+                if (data.habilidades && data.habilidades.length > 0) {
+                    data.habilidades.forEach(id => {
+                        const checkbox = form.querySelector(`input[name="habilidades"][value="${id}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+                
+                // Marcar las aptitudes seleccionadas
+                if (data.aptitudes && data.aptitudes.length > 0) {
+                    data.aptitudes.forEach(id => {
+                        const checkbox = form.querySelector(`input[name="aptitudes"][value="${id}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+                
+                // Marcar las competencias seleccionadas
+                if (data.competencias && data.competencias.length > 0) {
+                    data.competencias.forEach(id => {
+                        const checkbox = form.querySelector(`input[name="competencias"][value="${id}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
             });
     }
 
