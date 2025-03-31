@@ -65,7 +65,7 @@
 </div>
 
 <!-- Modal para Adicionar/Editar Usuario -->
-<div id="userModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+<div id="userModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" style="z-index: 1000;">
     <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
         <div class="mt-3">
             <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modalTitle">Adicionar/Editar Usuario</h3>
@@ -105,42 +105,27 @@
                     </div>
                     <div class="col-span-2">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Habilidades:</label>
-                        <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded">
+                        <select id="habilidades" name="habilidades" multiple class="select2-multiple">
                             {% for habilidad in habilidades %}
-                            <div>
-                                <label class="inline-flex items-center">
-                                    <input type="checkbox" name="habilidades" value="{{ habilidad.id }}" class="form-checkbox h-5 w-5 text-blue-600">
-                                    <span class="ml-2">{{ habilidad.nombre }}</span>
-                                </label>
-                            </div>
+                                <option value="{{ habilidad.id }}">{{ habilidad.nombre }}</option>
                             {% endfor %}
-                        </div>
+                        </select>
                     </div>
                     <div class="col-span-2">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Aptitudes:</label>
-                        <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded">
+                        <select id="aptitudes" name="aptitudes" multiple class="select2-multiple">
                             {% for aptitud in aptitudes %}
-                            <div>
-                                <label class="inline-flex items-center">
-                                    <input type="checkbox" name="aptitudes" value="{{ aptitud.id }}" class="form-checkbox h-5 w-5 text-blue-600">
-                                    <span class="ml-2">{{ aptitud.nombre }}</span>
-                                </label>
-                            </div>
+                                <option value="{{ aptitud.id }}">{{ aptitud.nombre }}</option>
                             {% endfor %}
-                        </div>
+                        </select>
                     </div>
                     <div class="col-span-2">
                         <label class="block text-gray-700 text-sm font-bold mb-2">Competencias:</label>
-                        <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded">
+                        <select id="competencias" name="competencias" multiple class="select2-multiple">
                             {% for competencia in competencias %}
-                            <div>
-                                <label class="inline-flex items-center">
-                                    <input type="checkbox" name="competencias" value="{{ competencia.id }}" class="form-checkbox h-5 w-5 text-blue-600">
-                                    <span class="ml-2">{{ competencia.nombre }}</span>
-                                </label>
-                            </div>
+                                <option value="{{ competencia.id }}">{{ competencia.nombre }}</option>
                             {% endfor %}
-                        </div>
+                        </select>
                     </div>
                     <div class="col-span-1">
                         <label for="activo" class="inline-flex items-center">
@@ -173,23 +158,68 @@ document.addEventListener('DOMContentLoaded', function() {
     const editButtons = document.querySelectorAll('.btnEditUser');
     const deleteButtons = document.querySelectorAll('.btnDeleteUser');
 
+    // Inicializar Select2
+    function initializeSelect2() {
+        $('.select2-multiple').select2({
+            theme: 'default',
+            width: '100%',
+            placeholder: "Seleccione opciones...",
+            allowClear: true,
+            closeOnSelect: false,
+            dropdownParent: $('#userModal'),
+            dropdownPosition: 'below',
+            language: {
+                noResults: function() {
+                    return "No se encontraron resultados";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            }
+        }).on('select2:opening', function() {
+            // Asegurar que el dropdown aparezca debajo del select
+            setTimeout(function() {
+                // Obtener el elemento select actual
+                const select = $(document.activeElement).closest('.select2-container');
+                if (select.length) {
+                    // Obtener la posición y dimensiones del select
+                    const position = select.offset();
+                    const width = select.outerWidth();
+                    const height = select.outerHeight();
+                    
+                    // Aplicar posición y dimensiones al dropdown
+                    $('.select2-dropdown').css({
+                        'position': 'fixed',
+                        'top': position.top + height,
+                        'left': position.left,
+                        'width': width
+                    });
+                    $('.select2-results').css('max-height', '200px');
+                }
+            }, 0);
+        });
+    }
+
     function showModal(title) {
         modalTitle.textContent = title;
         modal.classList.remove('hidden');
+        
+        // Inicializar Select2 después de que el modal sea visible
+        setTimeout(function() {
+            initializeSelect2();
+        }, 100);
     }
 
     function hideModal() {
         modal.classList.add('hidden');
         form.reset();
+        // Destruir Select2 para limpiar selecciones
+        $('.select2-multiple').select2('destroy');
     }
 
     btnAddUser.addEventListener('click', function() {
         showModal('Adicionar Usuario');
         document.getElementById('userId').value = '';
-        // Limpiar todas las casillas de verificación
-        form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = false;
-        });
     });
 
     editButtons.forEach(button => {
@@ -236,34 +266,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('rol').value = data.rol || '';
                 document.getElementById('activo').checked = data.activo;
                 
-                // Limpiar todas las casillas de verificación primero
-                form.querySelectorAll('input[type="checkbox"][name="habilidades"], input[type="checkbox"][name="aptitudes"], input[type="checkbox"][name="competencias"]').forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-                
-                // Marcar las habilidades seleccionadas
-                if (data.habilidades && data.habilidades.length > 0) {
-                    data.habilidades.forEach(id => {
-                        const checkbox = form.querySelector(`input[name="habilidades"][value="${id}"]`);
-                        if (checkbox) checkbox.checked = true;
-                    });
-                }
-                
-                // Marcar las aptitudes seleccionadas
-                if (data.aptitudes && data.aptitudes.length > 0) {
-                    data.aptitudes.forEach(id => {
-                        const checkbox = form.querySelector(`input[name="aptitudes"][value="${id}"]`);
-                        if (checkbox) checkbox.checked = true;
-                    });
-                }
-                
-                // Marcar las competencias seleccionadas
-                if (data.competencias && data.competencias.length > 0) {
-                    data.competencias.forEach(id => {
-                        const checkbox = form.querySelector(`input[name="competencias"][value="${id}"]`);
-                        if (checkbox) checkbox.checked = true;
-                    });
-                }
+                // Esperar a que Select2 esté inicializado antes de establecer valores
+                setTimeout(function() {
+                    // Establecer valores para habilidades
+                    if (data.habilidades && data.habilidades.length > 0) {
+                        $('#habilidades').val(data.habilidades).trigger('change');
+                    } else {
+                        $('#habilidades').val(null).trigger('change');
+                    }
+                    
+                    // Establecer valores para aptitudes
+                    if (data.aptitudes && data.aptitudes.length > 0) {
+                        $('#aptitudes').val(data.aptitudes).trigger('change');
+                    } else {
+                        $('#aptitudes').val(null).trigger('change');
+                    }
+                    
+                    // Establecer valores para competencias
+                    if (data.competencias && data.competencias.length > 0) {
+                        $('#competencias').val(data.competencias).trigger('change');
+                    } else {
+                        $('#competencias').val(null).trigger('change');
+                    }
+                }, 300);
             });
     }
 

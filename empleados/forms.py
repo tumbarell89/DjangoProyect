@@ -7,17 +7,29 @@ class UserEmpleadoForm(forms.ModelForm):
     rol = forms.ModelChoiceField(queryset=RolEmpleado.objects.all(), required=False)
     habilidades = forms.ModelMultipleChoiceField(
         queryset=Habilidad.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'select2-multiple',
+            'style': 'width: 100%',
+            'multiple': 'multiple'
+        }),
         required=False
     )
     aptitudes = forms.ModelMultipleChoiceField(
         queryset=Aptitud.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'select2-multiple',
+            'style': 'width: 100%',
+            'multiple': 'multiple'
+        }),
         required=False
     )
     competencias = forms.ModelMultipleChoiceField(
         queryset=Competencia.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
+        widget=forms.SelectMultiple(attrs={
+            'class': 'select2-multiple',
+            'style': 'width: 100%',
+            'multiple': 'multiple'
+        }),
         required=False
     )
 

@@ -13,6 +13,9 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('accounts/logout/', RedirectView.as_view(pattern_name='logout')),
     
+    # Django Select2
+    path('select2/', include('django_select2.urls')),
+    
     # Gestión de trabajadores
     path('gestionar-trabajadores/', views.gestionar_trabajadores, name='gestionar_trabajadores'),
     path('crear-editar-trabajador/', views.crear_editar_trabajador, name='crear_editar_trabajador'),
@@ -36,7 +39,6 @@ urlpatterns = [
     
     # Reportes y análisis
     path('reportes-analisis/', views.reportes_analisis, name='reportes_analisis'),
-
 ]
 
 router = DefaultRouter()
@@ -47,4 +49,3 @@ router.register(r'criterios', CriterioEvaluacionViewSet)
 router.register(r'evaluaciones', EvaluacionViewSet)
 
 urlpatterns += router.urls
-

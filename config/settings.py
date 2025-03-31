@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'empleados',
     'tailwind',
     'theme',
+    'django_select2',
 ]
 
 MIDDLEWARE = [
@@ -150,3 +151,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "theme/static",
 ]
+
+# Configuración para django-select2
+SELECT2_CACHE_BACKEND = 'default'
+

@@ -7,6 +7,83 @@
     <title>Sistema de Gestión de Empleados</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+    <!-- jQuery (necesario para Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Select2 CSS y JS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- CSS personalizado para Select2 -->
+    <style>
+        /* Estilos para Select2 */
+        .select2-container {
+            width: 100% !important;
+        }
+        
+        .select2-container--default .select2-selection--multiple {
+            border-color: #d1d5db;
+            border-radius: 0.375rem;
+            min-height: 38px;
+        }
+        
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+        }
+        
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #4e73df;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            color: white;
+            padding: 0;
+            margin-right: 5px;
+            margin-top: 5px;
+        }
+        
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: white;
+            margin-right: 0;
+        }
+        
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+            color: #f8f9fc;
+            background: none;
+        }
+        
+        /* Estilo específico para el texto del elemento seleccionado */
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+            cursor: default;
+            padding-left: 15px;
+            padding-right: 5px;
+        }
+        
+        .select2-dropdown {
+            border-color: #d1d5db;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        /* Asegurar que el dropdown aparezca debajo del select */
+        .select2-container--open .select2-dropdown--below {
+            margin-top: 2px;
+        }
+        
+        /* Ajustar z-index para que el dropdown aparezca por encima de otros elementos */
+        .select2-container--open {
+            z-index: 9999;
+        }
+        
+        /* Asegurar que el dropdown tenga el mismo ancho que el select */
+        .select2-container--default .select2-results > .select2-results__options {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 h-screen">
 
@@ -29,6 +106,6 @@
             {% block login %}{% endblock %}
         </div>
     {% endif %}
-
 </body>
 </html>
+
