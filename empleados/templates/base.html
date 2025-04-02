@@ -9,9 +9,11 @@
     <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
     <!-- jQuery (necesario para Select2) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
     <!-- Select2 CSS y JS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
     <!-- CSS personalizado para Select2 -->
     <style>
         /* Estilos para Select2 */
@@ -83,6 +85,103 @@
             max-height: 200px;
             overflow-y: auto;
         }
+        
+        /* Estilos para django-tables2 */
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            color: #212529;
+            border-collapse: collapse;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            vertical-align: top;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+        
+        .table tbody + tbody {
+            border-top: 2px solid #dee2e6;
+        }
+        
+        .table-sm th,
+        .table-sm td {
+            padding: 0.3rem;
+        }
+        
+        .table-bordered {
+            border: 1px solid #dee2e6;
+        }
+        
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #dee2e6;
+        }
+        
+        .table-bordered thead th,
+        .table-bordered thead td {
+            border-bottom-width: 2px;
+        }
+        
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .table-hover tbody tr:hover {
+            color: #212529;
+            background-color: rgba(0, 0, 0, 0.075);
+        }
+        
+        /* Estilos para paginación */
+        .pagination {
+            display: flex;
+            padding-left: 0;
+            list-style: none;
+            border-radius: 0.25rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        
+        .page-link {
+            position: relative;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            margin-left: -1px;
+            line-height: 1.25;
+            color: #3b82f6;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+        }
+        
+        .page-link:hover {
+            z-index: 2;
+            color: #1e40af;
+            text-decoration: none;
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+        }
+        
+        .page-item.active .page-link {
+            z-index: 3;
+            color: #fff;
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .page-item.disabled .page-link {
+            color: #6c757d;
+            pointer-events: none;
+            cursor: auto;
+            background-color: #fff;
+            border-color: #dee2e6;
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-screen">
@@ -106,6 +205,9 @@
             {% block login %}{% endblock %}
         </div>
     {% endif %}
+    
+    <!-- Script para inicializar DataTables en todas las tablas -->
+    
 </body>
 </html>
 

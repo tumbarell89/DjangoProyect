@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     'tailwind',
     'theme',
     'django_select2',
+    'django_tables2',
+    'django_filters',
+    'django_tables2_column_shifter',
 ]
 
 MIDDLEWARE = [
@@ -74,6 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',  # Necesario para django-tables2
             ],
         },
     },
@@ -119,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-es'
 
 TIME_ZONE = 'UTC'
 
@@ -154,4 +158,10 @@ STATICFILES_DIRS = [
 
 # Configuración para django-select2
 SELECT2_CACHE_BACKEND = 'default'
+
+# Configuración para django-tables2
+DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
+
+# Configuración para exportación de tablas
+DJANGO_TABLES2_EXPORT_FORMATS = ['csv', 'xlsx', 'json']
 

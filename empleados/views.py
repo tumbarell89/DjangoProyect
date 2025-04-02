@@ -26,8 +26,21 @@ import openpyxl
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
 import simplejson
+from django_tables2 import RequestConfig, SingleTableView
+from django_tables2.export.views import ExportMixin
+from django_filters.views import FilterView
+from .tables import UserEmpleadoTable, CriterioEvaluacionTable, EvaluacionTable
+from .filters import UserEmpleadoFilter, CriterioEvaluacionFilter, EvaluacionFilter
+import uuid
 
 # Existing view functions...
+
+class FilteredTableView(ExportMixin, FilterView, SingleTableView):
+    """
+    Vista genérica para tablas filtradas con capacidad de exportación
+    """
+    template_name = 'empleados/filtered_table.html'
+    export_formats = ['csv', 'xlsx', 'json']
 
 # ViewSets
 class EmpleadoViewSet(viewsets.ModelViewSet):
@@ -59,7 +72,14 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
 
 @login_required
 def gestionar_trabajadores(request):
-    usuarios = User.objects.filter(is_active=True)
+    # Filtro para usuarios
+    filterset = UserEmpleadoFilter(request.GET, queryset=User.objects.filter(is_active=True))
+    
+    # Tabla con los resultados filtrados
+    table = UserEmpleadoTable(filterset.qs)
+    RequestConfig(request, paginate={"per_page": 10}).configure(table)
+    
+    # Datos adicionales para el formulario
     departamentos = Departamento.objects.all()
     roles = RolEmpleado.objects.all()
     habilidades = Habilidad.objects.all()
@@ -67,7 +87,9 @@ def gestionar_trabajadores(request):
     competencias = Competencia.objects.all()
     
     return render(request, 'empleados/gestionar_trabajadores.html', {
-        'usuarios': usuarios,
+        'table': table,
+        'filter': filterset,
+        'usuarios': filterset.qs,
         'departamentos': departamentos,
         'roles': roles,
         'habilidades': habilidades,
@@ -192,9 +214,22 @@ def obtener_trabajador(request, user_id):
 
 @login_required
 def gestionar_criterios_evaluacion(request):
-    criterios = CriterioEvaluacion.objects.all()
+    # Filtro para criterios
+    filterset = CriterioEvaluacionFilter(request.GET, queryset=CriterioEvaluacion.objects.all())
+    
+    # Tabla con los resultados filtrados
+    table = CriterioEvaluacionTable(filterset.qs)
+    RequestConfig(request, paginate={"per_page": 10}).configure(table)
+    
+    # Datos adicionales para el formulario
     roles = RolEmpleado.objects.all()
-    return render(request, 'empleados/gestionar_criterios_evaluacion.html', {'criterios': criterios, 'roles': roles})
+    
+    return render(request, 'empleados/gestionar_criterios_evaluacion.html', {
+        'table': table,
+        'filter': filterset,
+        'criterios': filterset.qs,
+        'roles': roles
+    })
 
 @login_required
 @require_http_methods(["POST"])
@@ -233,9 +268,17 @@ def obtener_criterio(request, criterio_id):
 
 @login_required
 def gestionar_evaluaciones(request):
-    evaluaciones = Evaluacion.objects.all()
+    # Filtro para evaluaciones
+    filterset = EvaluacionFilter(request.GET, queryset=Evaluacion.objects.all())
+    
+    # Tabla con los resultados filtrados
+    table = EvaluacionTable(filterset.qs)
+    RequestConfig(request, paginate={"per_page": 10}).configure(table)
+    
     return render(request, 'empleados/gestionar_evaluaciones.html', {
-        'evaluaciones': evaluaciones
+        'table': table,
+        'filter': filterset,
+        'evaluaciones': filterset.qs
     })
 
 @login_required
