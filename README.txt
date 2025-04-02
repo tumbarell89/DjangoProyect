@@ -67,3 +67,8 @@ python manage.py runserver
 Con estos pasos, deberías poder desplegar tu proyecto Django en otra computadora y asegurarte de que todo esté configurado correctamente.
 
 Similar code found with 1 license type - View matches
+
+para datatable
+pip install django-tables2 django-filter django-tables2-column-shifter openpyxl
+pip install django-tables2 django-filter django-tables2-column-shifter tablib openpyxl
+pip install django-tables2 django-filter tablib openpyxl
