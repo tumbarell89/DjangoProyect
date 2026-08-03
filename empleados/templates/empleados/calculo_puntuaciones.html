@@ -1,7 +1,201 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<h2 class="text-2xl font-bold mb-4">Cálculo de Puntuaciones</h2>
-<p>Aquí se implementará el cálculo de puntuaciones.</p>
+<div class="container mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-6">Cálculo de Puntuaciones</h1>
+    
+    <form id="calculoForm" class="mb-8">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label for="fecha_inicial" class="block text-sm font-medium text-gray-700">Fecha Inicial</label>
+                <input type="date" id="fecha_inicial" name="fecha_inicial" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+            </div>
+            <div>
+                <label for="fecha_final" class="block text-sm font-medium text-gray-700">Fecha Final</label>
+                <input type="date" id="fecha_final" name="fecha_final" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+            </div>
+        </div>
+        <div class="mb-4">
+            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Buscar Evaluaciones
+            </button>
+        </div>
+    </form>
+
+    <div id="evaluacionesContainer" class="mb-8 hidden">
+        <h2 class="text-2xl font-bold mb-4">Evaluaciones Encontradas</h2>
+        <form id="seleccionForm">
+            {% csrf_token %}
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-left">Seleccionar</th>
+                        <th class="py-3 px-6 text-left">Fecha</th>
+                        <th class="py-3 px-6 text-left">Período</th>
+                    </tr>
+                </thead>
+                <tbody id="evaluacionesList">
+                    <!-- Las evaluaciones se insertarán aquí dinámicamente -->
+                </tbody>
+            </table>
+            <div class="mt-4">
+                <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    Calcular Puntuaciones
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="resultadosContainer" class="hidden">
+        <h2 class="text-2xl font-bold mb-4">Resultados</h2>
+        <div class="mb-4">
+            <button id="exportarExcel" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Exportar a Excel
+            </button>
+        </div>
+        <table class="min-w-full leading-normal">
+            <thead>
+                <tr>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Empleado
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Promedio (todos los criterios)
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Promedio (sin criterios genéricos)
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="resultadosBody">
+                <!-- Los resultados se insertarán aquí dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calculoForm = document.getElementById('calculoForm');
+    const seleccionForm = document.getElementById('seleccionForm');
+    const evaluacionesContainer = document.getElementById('evaluacionesContainer');
+    const evaluacionesList = document.getElementById('evaluacionesList');
+    const resultadosContainer = document.getElementById('resultadosContainer');
+    const resultadosBody = document.getElementById('resultadosBody');
+
+    calculoForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(calculoForm);
+        
+        fetch('{% url "calculo_puntuaciones" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            evaluacionesList.innerHTML = '';
+            if (data.evaluaciones && data.evaluaciones.length > 0) {
+                data.evaluaciones.forEach(evaluacion => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="py-3 px-6 text-left">
+                            <input type="checkbox" name="evaluaciones" value="${evaluacion.id}" class="form-checkbox h-5 w-5 text-blue-600">
+                        </td>
+                        <td class="py-3 px-6 text-left">${evaluacion.fecha}</td>
+                        <td class="py-3 px-6 text-left">${evaluacion.mes_inicial} - ${evaluacion.mes_final}</td>
+                    `;
+                    evaluacionesList.appendChild(tr);
+                });
+                evaluacionesContainer.classList.remove('hidden');
+                resultadosContainer.classList.add('hidden');
+            } else {
+                evaluacionesContainer.classList.add('hidden');
+                alert('No se encontraron evaluaciones en el rango de fechas seleccionado.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error al buscar las evaluaciones. Por favor, intente nuevamente.');
+        });
+    });
+
+    seleccionForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(seleccionForm);
+        formData.append('fecha_inicial', document.getElementById('fecha_inicial').value);
+        formData.append('fecha_final', document.getElementById('fecha_final').value);
+        
+        fetch('{% url "calculo_puntuaciones" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            resultadosBody.innerHTML = '';
+            if (data.empleados && data.empleados.length > 0) {
+                data.empleados.forEach(empleado => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">${empleado.nombre}</p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">${empleado.promedio}</p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">${empleado.promedio_no_generico}</p>
+                        </td>
+                    `;
+                    resultadosBody.appendChild(tr);
+                });
+                resultadosContainer.classList.remove('hidden');
+            } else {
+                resultadosContainer.classList.add('hidden');
+                alert('No se encontraron resultados para las evaluaciones seleccionadas.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error al calcular las puntuaciones. Por favor, intente nuevamente.');
+        });
+    });
+
+    document.getElementById('exportarExcel').addEventListener('click', function() {
+        const formData = new FormData(seleccionForm);
+        formData.append('fecha_inicial', document.getElementById('fecha_inicial').value);
+        formData.append('fecha_final', document.getElementById('fecha_final').value);
+        formData.append('export', 'true');
+        
+        fetch('{% url "calculo_puntuaciones" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'calculo_puntuaciones.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
+    });
+});
+</script>
 {% endblock %}
 

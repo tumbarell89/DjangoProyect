@@ -27,6 +27,13 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_URL = '/'
+# Asegúrate de que no haya una línea como esta:
+# AUTH_USER_MODEL = 'empleados.CustomUser'
+
+LOGOUT_REDIRECT_URL = 'login'
+LOGIN_REDIRECT_URL = 'gestionar_trabajadores'
 
 # Application definition
 
@@ -37,9 +44,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'empleados',
     'tailwind',
     'theme',
+    'django_select2',
+    'django_tables2',
+    'django_filters',
+    'django_tables2_column_shifter',
 ]
 
 MIDDLEWARE = [
@@ -65,6 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',  # Necesario para django-tables2
             ],
         },
     },
@@ -110,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-es'
 
 TIME_ZONE = 'UTC'
 
@@ -130,3 +143,25 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 TAILWIND_APP_NAME = 'theme'
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
+NPM_BIN_PATH = "C:\\Program Files\\nodejs\\npm.cmd"
+
+STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [
+    BASE_DIR / "theme/static",
+]
+
+# Configuración para django-select2
+SELECT2_CACHE_BACKEND = 'default'
+
+# Configuración para django-tables2
+DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
+
+# Configuración para exportación de tablas
+DJANGO_TABLES2_EXPORT_FORMATS = ['csv', 'xlsx', 'json']
+

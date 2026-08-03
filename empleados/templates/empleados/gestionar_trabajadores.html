@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load django_tables2 %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-6">Gestionar Trabajadores</h1>
+    <div class="mb-4">
+        <button id="btnAddUser" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Adicionar Usuario
+        </button>
+    </div>
+    
+    <!-- Filtros en un solo cuadro horizontal -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+        <form method="get" class="flex flex-wrap items-center gap-6">
+            <div class="flex-1 px-4">
+                <label for="id_nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                {{ filter.form.nombre }}
+            </div>
+            <div class="flex-1 px-4">
+                <label for="id_departamento" class="block text-sm font-medium text-gray-700 mb-2">Departamento</label>
+                {{ filter.form.departamento }}
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Filtrar
+                </button>
+                <a href="?" class="ml-2 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                    Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full leading-normal">
+            <thead>
+                <tr class="bg-blue-600 text-white uppercase text-sm leading-normal">
+                    <th class="py-3 px-6 text-left">
+                        <a href="{% querystring table.prefixed_order_by_field='nombre' %}" class="text-white hover:text-blue-100">Nombre</a>
+                    </th>
+                    <th class="py-3 px-6 text-left">
+                        <a href="{% querystring table.prefixed_order_by_field='apellido' %}" class="text-white hover:text-blue-100">Apellido</a>
+                    </th>
+                    <th class="py-3 px-6 text-left">
+                        <a href="{% querystring table.prefixed_order_by_field='email' %}" class="text-white hover:text-blue-100">Email</a>
+                    </th>
+                    <th class="py-3 px-6 text-left">
+                        <a href="{% querystring table.prefixed_order_by_field='departamento' %}" class="text-white hover:text-blue-100">Departamento</a>
+                    </th>
+                    <th class="py-3 px-6 text-left">
+                        <a href="{% querystring table.prefixed_order_by_field='rol' %}" class="text-white hover:text-blue-100">Rol</a>
+                    </th>
+                    <th class="py-3 px-6 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-600 text-sm font-light">
+                {% for usuario in usuarios %}
+                <tr class="border-b border-gray-200 hover:bg-gray-100">
+                    <td class="py-3 px-6 text-left">
+                        <span>{{ usuario.first_name }}</span>
+                    </td>
+                    <td class="py-3 px-6 text-left">
+                        <span>{{ usuario.last_name }}</span>
+                    </td>
+                    <td class="py-3 px-6 text-left">
+                        <span>{{ usuario.email }}</span>
+                    </td>
+                    <td class="py-3 px-6 text-left">
+                        <span>{{ usuario.empleado.departamento.denominacion|default:"" }}</span>
+                    </td>
+                    <td class="py-3 px-6 text-left">
+                        <span>{{ usuario.empleado.rol.denominacion|default:"" }}</span>
+                    </td>
+                    <td class="py-3 px-6 text-center">
+                        <div class="flex item-center justify-center">
+                            <button class="w-4 mr-2 transform hover:text-purple-500 hover:scale-110 btnEditUser" data-user-id="{{ usuario.id }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                            </button>
+                            <button class="w-4 mr-2 transform hover:text-red-500 hover:scale-110 btnDeleteUser" data-user-id="{{ usuario.id }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="py-3 px-6 text-center">No hay usuarios registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Paginación -->
+        {% if table.page and table.paginator.num_pages > 1 %}
+        <div class="py-3 px-6 border-t border-gray-200">
+            <div class="flex justify-center">
+                <ul class="flex">
+                    {% if table.page.has_previous %}
+                    <li>
+                        <a href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-l hover:bg-gray-300">
+                            Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for p in table.paginator.page_range %}
+                    {% if p == table.page.number %}
+                    <li>
+                        <span class="px-3 py-1 bg-blue-500 text-white">{{ p }}</span>
+                    </li>
+                    {% else %}
+                    <li>
+                        <a href="{% querystring table.prefixed_page_field=p %}" class="px-3 py-1 bg-gray-200 text-gray-700 hover:bg-gray-300">
+                            {{ p }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if table.page.has_next %}
+                    <li>
+                        <a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}" class="px-3 py-1 bg-gray-200 text-gray-700 rounded-r hover:bg-gray-300">
+                            Siguiente
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para Adicionar/Editar Usuario -->
+<div id="userModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" style="z-index: 1000;">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modalTitle">Adicionar/Editar Usuario</h3>
+            <div class="mt-2 px-7 py-3">
+                <form id="userForm" class="grid grid-cols-2 gap-4">
+                    {% csrf_token %}
+                    <input type="hidden" id="userId" name="user_id">
+                    <div class="col-span-1">
+                        <label for="first_name" class="block text-gray-700 text-sm font-bold mb-2">Nombre:</label>
+                        <input type="text" id="first_name" name="first_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="last_name" class="block text-gray-700 text-sm font-bold mb-2">Apellido:</label>
+                        <input type="text" id="last_name" name="last_name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="col-span-2">
+                        <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email:</label>
+                        <input type="email" id="email" name="email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    </div>
+                    <div class="col-span-1">
+                        <label for="departamento" class="block text-gray-700 text-sm font-bold mb-2">Departamento:</label>
+                        <select id="departamento" name="departamento" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <option value="">Seleccione un departamento</option>
+                            {% for departamento in departamentos %}
+                                <option value="{{ departamento.id }}">{{ departamento.denominacion }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-span-1">
+                        <label for="rol" class="block text-gray-700 text-sm font-bold mb-2">Rol:</label>
+                        <select id="rol" name="rol" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <option value="">Seleccione un rol</option>
+                            {% for rol in roles %}
+                                <option value="{{ rol.id }}">{{ rol.denominacion }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Habilidades:</label>
+                        <select id="habilidades" name="habilidades" multiple class="select2-multiple">
+                            {% for habilidad in habilidades %}
+                                <option value="{{ habilidad.id }}">{{ habilidad.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Aptitudes:</label>
+                        <select id="aptitudes" name="aptitudes" multiple class="select2-multiple">
+                            {% for aptitud in aptitudes %}
+                                <option value="{{ aptitud.id }}">{{ aptitud.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Competencias:</label>
+                        <select id="competencias" name="competencias" multiple class="select2-multiple">
+                            {% for competencia in competencias %}
+                                <option value="{{ competencia.id }}">{{ competencia.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-span-1">
+                        <label for="activo" class="inline-flex items-center">
+                            <input type="checkbox" id="activo" name="activo" class="form-checkbox h-5 w-5 text-blue-600">
+                            <span class="ml-2 text-gray-700">Activo</span>
+                        </label>
+                    </div>
+                    <div class="col-span-2 flex justify-end space-x-2">
+                        <button id="btnCancelUser" type="button" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            Cancelar
+                        </button>
+                        <button id="btnSaveUser" type="button" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('userModal');
+    const form = document.getElementById('userForm');
+    const btnAddUser = document.getElementById('btnAddUser');
+    const btnSaveUser = document.getElementById('btnSaveUser');
+    const btnCancelUser = document.getElementById('btnCancelUser');
+    const modalTitle = document.getElementById('modalTitle');
+
+    // Inicializar Select2
+    function initializeSelect2() {
+        $('.select2-multiple').select2({
+            theme: 'default',
+            width: '100%',
+            placeholder: "Seleccione opciones...",
+            allowClear: true,
+            closeOnSelect: false,
+            dropdownParent: $('#userModal'),
+            dropdownPosition: 'below',
+            language: {
+                noResults: function() {
+                    return "No se encontraron resultados";
+                },
+                searching: function() {
+                    return "Buscando...";
+                }
+            }
+        }).on('select2:opening', function() {
+            // Asegurar que el dropdown aparezca debajo del select
+            setTimeout(function() {
+                // Obtener el elemento select actual
+                const select = $(document.activeElement).closest('.select2-container');
+                if (select.length) {
+                    // Obtener la posición y dimensiones del select
+                    const position = select.offset();
+                    const width = select.outerWidth();
+                    const height = select.outerHeight();
+                    
+                    // Aplicar posición y dimensiones al dropdown
+                    $('.select2-dropdown').css({
+                        'position': 'fixed',
+                        'top': position.top + height,
+                        'left': position.left,
+                        'width': width
+                    });
+                    $('.select2-results').css('max-height', '200px');
+                }
+            }, 0);
+        });
+    }
+
+    function showModal(title) {
+        modalTitle.textContent = title;
+        modal.classList.remove('hidden');
+        
+        // Inicializar Select2 después de que el modal sea visible
+        setTimeout(function() {
+            initializeSelect2();
+        }, 100);
+    }
+
+    function hideModal() {
+        modal.classList.add('hidden');
+        form.reset();
+        // Destruir Select2 para limpiar selecciones
+        $('.select2-multiple').select2('destroy');
+    }
+
+    btnAddUser.addEventListener('click', function() {
+        showModal('Adicionar Usuario');
+        document.getElementById('userId').value = '';
+    });
+
+    // Asignar eventos a los botones de editar
+    $(document).on('click', '.btnEditUser', function() {
+        const userId = $(this).data('user-id');
+        showModal('Editar Usuario');
+        loadUserData(userId);
+    });
+
+    // Asignar eventos a los botones de eliminar
+    $(document).on('click', '.btnDeleteUser', function() {
+        const userId = $(this).data('user-id');
+        if (confirm('¿Está seguro de que desea eliminar este usuario?')) {
+            deleteUser(userId);
+        }
+    });
+
+    btnSaveUser.addEventListener('click', function() {
+        saveUserData();
+    });
+
+    btnCancelUser.addEventListener('click', function() {
+        hideModal();
+    });
+
+    // Cerrar el modal si se hace clic fuera de él
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            hideModal();
+        }
+    });
+
+    function loadUserData(userId) {
+        fetch(`/obtener-trabajador/${userId}/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('userId').value = data.id;
+                document.getElementById('first_name').value = data.first_name;
+                document.getElementById('last_name').value = data.last_name;
+                document.getElementById('email').value = data.email;
+                document.getElementById('departamento').value = data.departamento || '';
+                document.getElementById('rol').value = data.rol || '';
+                document.getElementById('activo').checked = data.activo;
+                
+                // Esperar a que Select2 esté inicializado antes de establecer valores
+                setTimeout(function() {
+                    // Establecer valores para habilidades
+                    if (data.habilidades && data.habilidades.length > 0) {
+                        $('#habilidades').val(data.habilidades).trigger('change');
+                    } else {
+                        $('#habilidades').val(null).trigger('change');
+                    }
+                    
+                    // Establecer valores para aptitudes
+                    if (data.aptitudes && data.aptitudes.length > 0) {
+                        $('#aptitudes').val(data.aptitudes).trigger('change');
+                    } else {
+                        $('#aptitudes').val(null).trigger('change');
+                    }
+                    
+                    // Establecer valores para competencias
+                    if (data.competencias && data.competencias.length > 0) {
+                        $('#competencias').val(data.competencias).trigger('change');
+                    } else {
+                        $('#competencias').val(null).trigger('change');
+                    }
+                }, 300);
+            });
+    }
+
+    function saveUserData() {
+        const formData = new FormData(form);
+        const userId = formData.get('user_id');
+        const url = '/crear-editar-trabajador/';
+        const method = 'POST';
+
+        fetch(url, {
+            method: method,
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                hideModal();
+                // Recargar la página para mostrar los cambios
+                window.location.reload();
+            } else {
+                // Manejar errores
+                console.error('Error al guardar:', data.errors);
+                alert('Error al guardar los datos. Por favor, revise los campos e intente nuevamente.');
+            }
+        });
+    }
+
+    function deleteUser(userId) {
+        fetch(`/eliminar-trabajador/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Recargar la página para mostrar los cambios
+                window.location.reload();
+            } else {
+                alert('Error al eliminar el usuario.');
+            }
+        });
+    }
+    
+    // Mejorar la apariencia de los campos de filtro
+    document.querySelectorAll('#id_nombre, #id_departamento').forEach(function(input) {
+        input.classList.add('shadow', 'appearance-none', 'border', 'rounded', 'w-full', 'py-2', 'px-3', 'text-gray-700', 'leading-tight', 'focus:outline-none', 'focus:shadow-outline');
+    });
+});
+</script>
+{% endblock %}
+

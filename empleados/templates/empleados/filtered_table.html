@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load django_tables2 %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-6">{{ title }}</h1>
+    
+    <div class="bg-white shadow-md rounded-lg p-4 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Filtros</h2>
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {{ filter.form.as_p }}
+            <div class="md:col-span-3 flex justify-end">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Filtrar
+                </button>
+                <a href="?" class="ml-2 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                    Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        {% render_table table 'django_tables2/bootstrap4.html' %}
+    </div>
+</div>
+{% endblock %}
+
